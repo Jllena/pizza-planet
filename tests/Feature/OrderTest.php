@@ -122,4 +122,34 @@ class OrderTest extends TestCase
             ->assertSee('olives')
             ->assertSee('mushrooms');
     }
+
+    /** @test */
+    public function it_sets_default_selection_to_first_non_custom_pizza(): void
+    {
+        $this->seed(PizzaSeeder::class);
+
+        $firstPreset = Pizza::where('is_custom', false)->orderBy('name')->firstOrFail();
+
+        Livewire::test(OrderCreate::class)
+            ->assertSet('selectedPizzaId', $firstPreset->id)
+            ->assertSet('isCustom', false);
+    }
+
+    /** @test */
+    public function switching_from_custom_to_preset_clears_selected_toppings(): void
+    {
+        $this->seed(PizzaSeeder::class);
+
+        $customPizza = Pizza::where('is_custom', true)->firstOrFail();
+        $presetPizza = Pizza::where('is_custom', false)->orderBy('name')->firstOrFail();
+        $toppings = Topping::take(2)->pluck('id')->toArray();
+
+        Livewire::test(OrderCreate::class)
+            ->set('selectedPizzaId', $customPizza->id)
+            ->assertSet('isCustom', true)
+            ->set('selectedToppings', $toppings)
+            ->set('selectedPizzaId', $presetPizza->id)
+            ->assertSet('isCustom', false)
+            ->assertSet('selectedToppings', []);
+    }
 }

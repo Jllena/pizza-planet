@@ -60,6 +60,24 @@ class OrdersTableTest extends TestCase
             ->assertDontSee('Other Name');
     }
 
+    /** @test */
+    public function it_resets_to_first_page_when_search_changes(): void
+    {
+        $this->seed(PizzaSeeder::class);
+
+        $pizza = Pizza::first();
+        // Create enough orders to move away from the first page.
+        foreach (range(1, 12) as $i) {
+            $this->makeOrder($pizza, ['customer_name' => "Customer {$i}"]);
+        }
+
+        Livewire::test(OrdersTable::class)
+            ->call('setPage', 2)
+            ->assertSet('paginators.page', 2)
+            ->set('search', 'Customer 1')
+            ->assertSet('paginators.page', 1);
+    }
+
     private function makeOrder(Pizza $pizza, array $overrides = []): Order
     {
         $pizza->load('toppings');
